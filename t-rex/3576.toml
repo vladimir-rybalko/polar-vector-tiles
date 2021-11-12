@@ -1,0 +1,147 @@
+### Working config for OpenMapTiles schema
+
+[webserver]
+    bind = "0.0.0.0"
+    port = 8081
+
+[service.mvt]
+    viewer = true
+
+[cache.file]
+    base = "/data/openmaptiles/mvtcache"
+
+[[datasource]]
+    name = "osm"
+    dbconn = "postgresql://openmaptiles:openmaptiles@kocalhost:49157/openmaptiles"
+
+#[grid]
+#predefined = "web_mercator"
+
+[grid.user]
+# 3576
+width = 256
+height = 256
+extent = { minx = -4889334.802954878, miny = -4889334.802954878, maxx = 4889334.802954878, maxy = 4889334.802954878 }
+srid = 3576
+units = "m"
+resolutions = [38197.92814808498, 19098.96407404249, 9549.482037021246, 4774.741018510623, 2387.3705092553114, 1193.6852546276557, 596.8426273138278, 298.4213136569139, 149.21065682845696, 74.60532841422848, 37.30266420711424, 18.65133210355712, 9.32566605177856, 4.66283302588928, 2.33141651294464, 1.16570825647232, 0.58285412823616, 0.29142706411808, 0.14571353205904, 0.07285676602952, 0.03642838301476, 0.01821419150738, 0.00910709575369]
+origin = "TopLeft"
+
+[[tileset]]
+name = "openmaptiles"
+attribution = "<a href=\"https://www.openmaptiles.org/\" target=\"_blank\">&copy; OpenMapTiles</a> <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\">&copy; OpenStreetMap contributors</a>"
+
+[[tileset.layer]]
+name = "water"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "POLYGON"
+srid = 3576
+buffer_size = 4
+simplify = true
+[[tileset.layer.query]]
+sql = """SELECT 
+    CASE WHEN ST_IsValid(geometry) THEN ST_Transform(geometry, 3576) ELSE ST_Transform(ST_MakeValid(geometry), 3576) END as geometry, class, intermittent, brunnel FROM layer_water(ST_Transform(!bbox!,3857), !zoom!)"""
+
+[[tileset.layer]]
+name = "waterway"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "LINESTRING"
+srid = 3576
+buffer_size = 4
+[[tileset.layer.query]]
+sql = """SELECT ST_Transform(ST_MakeValid(geometry), 3576) as geometry, name, name_en, name_de, NULLIF(tags->'name:en', '') AS
+      "name:en", NULLIF(tags->'name:ru', '') AS "name:ru", NULLIF(tags->'name_int',
+      '') AS "name_int", NULLIF(tags->'name:latin', '') AS "name:latin", NULLIF(tags->'name:nonlatin',
+      '') AS "name:nonlatin", class, brunnel, intermittent FROM layer_waterway(ST_Transform(!bbox!,3857),!zoom!)"""
+
+[[tileset.layer]]
+name = "landcover"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "POLYGON"
+srid = 3576
+buffer_size = 4
+make_valid = true
+[[tileset.layer.query]]
+sql = """SELECT ST_Transform(ST_MakeValid(geometry), 3576) as geometry, class, subclass FROM layer_landcover(ST_Transform(!bbox!,3857), !zoom!)"""
+
+[[tileset.layer]]
+name = "landuse"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "POLYGON"
+srid = 3576
+buffer_size = 4
+[[tileset.layer.query]]
+sql = """SELECT ST_Transform(ST_MakeValid(geometry), 3576) as geometry, class FROM layer_landuse(ST_Transform(!bbox!,3857), !zoom!)"""
+
+[[tileset.layer]]
+name = "park"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "POINT"
+srid = 3576
+buffer_size = 4
+[[tileset.layer.query]]
+sql = """SELECT ST_Transform(ST_MakeValid(geometry), 3576) as geometry, class, name, name_en, name_de, NULLIF(tags->'name:en',
+      '') AS "name:en", NULLIF(tags->'name:ru', '') AS "name:ru", NULLIF(tags->'name_int',
+      '') AS "name_int", NULLIF(tags->'name:latin', '') AS "name:latin", NULLIF(tags->'name:nonlatin',
+      '') AS "name:nonlatin", rank FROM layer_park(ST_Transform(!bbox!,3857), !zoom!, cast(!pixel_width! as integer))"""
+
+[[tileset.layer]]
+name = "boundary"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "LINESTRING"
+srid = 3576
+buffer_size = 4
+[[tileset.layer.query]]
+sql = """SELECT ST_Transform(ST_MakeValid(geometry), 3576) as geometry, admin_level, adm0_l, adm0_r, disputed, disputed_name, claimed_by, maritime FROM layer_boundary(ST_Transform(!bbox!,3857), !zoom!)"""
+
+[[tileset.layer]]
+name = "aeroway"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "LINESTRING"
+srid = 3576
+buffer_size = 4
+[[tileset.layer.query]]
+sql = """SELECT ST_Transform(ST_MakeValid(geometry), 3576) as geometry, ref, class FROM layer_aeroway(ST_Transform(!bbox!,3857), !zoom!)"""
+
+[[tileset.layer]]
+name = "transportation"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "LINESTRING"
+srid = 3576
+buffer_size = 4
+[[tileset.layer.query]]
+sql = """SELECT ST_Transform(ST_MakeValid(geometry), 3576) as geometry, class, subclass, network, oneway, ramp, brunnel, service, access, toll, layer, level, indoor, bicycle, foot, horse, mtb_scale, surface FROM layer_transportation(ST_Transform(!bbox!,3857),!zoom!)"""
+
+[[tileset.layer]]
+name = "water_name"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "POINT"
+srid = 3576
+buffer_size = 256
+[[tileset.layer.query]]
+sql = """SELECT osm_id, ST_Transform(ST_MakeValid(geometry), 3576) as geometry, name, name_en, name_de, NULLIF(tags->'name:en',
+      '') AS "name:en", NULLIF(tags->'name:ru', '') AS "name:ru", NULLIF(tags->'name_int',
+      '') AS "name_int", NULLIF(tags->'name:latin', '') AS "name:latin", NULLIF(tags->'name:nonlatin',
+      '') AS "name:nonlatin", class, intermittent FROM layer_water_name(ST_Transform(!bbox!,3857), !zoom!)"""
+
+[[tileset.layer]]
+name = "place"
+datasource = "osm"
+geometry_field = "geometry"
+geometry_type = "POINT"
+srid = 3576
+buffer_size = 256
+[[tileset.layer.query]]
+sql = """SELECT osm_id, ST_Transform(ST_MakeValid(geometry), 3576) as geometry, name, name_en, name_de, NULLIF(tags->'name:en',
+      '') AS "name:en", NULLIF(tags->'name:ru', '') AS "name:ru", NULLIF(tags->'name_int',
+      '') AS "name_int", NULLIF(tags->'name:latin', '') AS "name:latin", NULLIF(tags->'name:nonlatin',
+      '') AS "name:nonlatin", class, rank, capital, iso_a2 FROM layer_place(ST_Transform(!bbox!,3857), !zoom!, cast(!pixel_width! as integer))"""
